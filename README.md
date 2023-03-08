@@ -1,2 +1,2 @@
-# -A-TeamPG-
+# A-TeamPG
 Object-Oriented Programming: Team Profile Generator
