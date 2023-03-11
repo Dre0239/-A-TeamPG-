@@ -1,257 +1,189 @@
-// Dependencies
-const inquirer = require("inquirer");
 const fs = require("fs");
-const util = require("util");
-const Manager = require("./lib/Manager");
-const Engineer = require("./lib/Engineer");
-const Intern = require("./lib/Intern");
-const generateHTML = require("./src/generateHTML");
-const chalk = require("chalk");
+const inquirer = require("inquirer");
+const path = require("path");
+const Manager = require("./lib/manager");
+const Engineer = require("./lib/engineer");
+const Intern = require("./lib/intern");
 
-// writeFile function
-const writeFileAsync = util.promisify(fs.writeFile);
+// Output Directory
+const DIST_DIR = path.resolve(__dirname, "dist");
 
-// Team array [[manager], [engineer/s], [intern/s]]
-const team = [[], [], []];
+// Output file path and name
+const outputPath = path.join(DIST_DIR, "jobApp.html");
 
-// Runs next function according to inquirer prompt menu selection
-let menuPick = "";
-function nextPrompt() {
-  switch (menuPick) {
-    case "Add an" + chalk.bold(" ENGINEER") + " to my team":
-      engineerInfo();
-      break;
-    case "Add an" + chalk.bold(" INTERN") + " to my team":
-      internInfo();
-      break;
-    case "Add another" + chalk.bold(" ENGINEER") + " to my team":
-      engineerInfo();
-      break;
-    case "Add another" + chalk.bold(" INTERN") + " to my team":
-      internInfo();
-      break;
-    default:
-      writeFileAsync("./dist/profile.html", generateHTML(team))
-        .then(() =>
-          console.log(
-            chalk.black.bgGreenBright(" New HTML file successfully generated! ")
-          )
-        )
-        .catch((err) =>
-          console.log(
-            chalk.black.bgRedBright(" Oops, there was an error... ", err)
-          )
-        );
-      break;
-  }
+// Import HTML template
+const templateHTML = require(".//src/tempHTML");
+
+// Create an empty array of team
+const team = [];
+
+function addTeamMember() {
+  inquirer
+    .prompt([
+      {
+        type: "list",
+        name: "what_team_member",
+        message:
+          "Add an engineer, Add an intern or finish assembling your team?",
+        choices: ["Engineer", "Intern", "Assemble Team!"],
+      },
+    ])
+    .then((val) => {
+      if (val.what_team_member === "Engineer") {
+        addEngineer();
+      } else if (val.what_team_member === "Intern") {
+        addIntern();
+      } else {
+        createTeamFile();
+      }
+    });
 }
 
-// Prompt validation functions
-function validateName(name) {
-  if (name.length <= 25 && name.length > 0) {
-    return true;
-  }
-  return chalk.redBright("Name must be between 1-25 characters (inclusive)");
-}
-
-function validateNumber(num) {
-  if (/^[0-9]+$/.test(num)) {
-    return true;
-  }
-  return chalk.redBright("Only numeric values are accepted");
-}
-
-function validateEmail(email) {
-  if (/^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/.test(email)) {
-    return true;
-  }
-  return chalk.redBright("Please input a valid email address");
-}
-
-function validateGithub(github) {
-  if (/^[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}$/i.test(github)) {
-    return true;
-  }
-  return chalk.redBright("Please input a valid GitHub username");
-}
-
-// Manager prompts
-const managerInfo = () => {
+/*Get manager data inputs*/
+function addManager() {
   inquirer
     .prompt([
       {
         type: "input",
-        name: "managerName",
-        message: "Team manager " + chalk.italic("name") + " (1-25 characters):",
-        validate: validateName,
+        name: "name",
+        message: "What is the name of the team manager?",
       },
       {
         type: "input",
-        name: "managerId",
-        message: "Team manager " + chalk.italic("employee ID") + ":",
-        validate: validateNumber,
+        name: "id",
+        message: "Employee ID of the team manager?",
       },
       {
         type: "input",
-        name: "managerEmail",
-        message: "Team manager " + chalk.italic("email") + ":",
-        validate: validateEmail,
+        name: "email",
+        message: "Email address of the team manager?",
       },
       {
         type: "input",
-        name: "managerOfficeNumber",
-        message: "Team manager " + chalk.italic("office number") + ":",
-        validate: validateNumber,
+        name: "imgSrc",
+        message: "What is the imgSrc of the team manager?",
       },
       {
-        type: "list",
-        name: "menu",
-        message: chalk.yellow(
-          "--------- Menu --------- \nChoose one of the following options:"
-        ),
-        choices: [
-          {
-            name: "Add an" + chalk.bold(" ENGINEER") + " to my team",
-          },
-          {
-            name: "Add an" + chalk.bold(" INTERN") + " to my team",
-          },
-          {
-            name: "My team is complete",
-          },
-        ],
+        type: "input",
+        name: "officeNumber",
+        message: "What is the office number of the team manager?",
       },
     ])
-    .then((answers) => {
-      menuPick = answers.menu;
+    .then((val) => {
       const manager = new Manager(
-        answers.managerName,
-        parseInt(answers.managerId),
-        answers.managerEmail,
-        parseInt(answers.managerOfficeNumber)
+        val.name,
+        val.id,
+        val.email,
+        val.imgSrc,
+        val.officeNumber
       );
-      team[0].push(manager);
-      nextPrompt();
+      console.table(manager);
+      team.push(manager);
+      addTeamMember();
     });
-};
+}
 
-// Engineer prompts
-const engineerInfo = () => {
+/* Get engineer data by prompts */
+function addEngineer() {
   inquirer
     .prompt([
       {
         type: "input",
-        name: "engineerName",
-        message: "Engineer" + chalk.italic(" name") + " (1-25 characters):",
-        validate: validateName,
+        name: "name",
+        message: `What is the engineers's name`,
       },
       {
         type: "input",
-        name: "engineerId",
-        message: "Engineer" + chalk.italic(" employee ID") + ":",
-        validate: validateNumber,
+        name: "id",
+        message: `What is the engineer's employee ID?`,
       },
       {
         type: "input",
-        name: "engineerEmail",
-        message: "Engineer" + chalk.italic(" email") + ":",
-        validate: validateEmail,
+        name: "email",
+        message: `What is the engineer's email address?`,
       },
       {
         type: "input",
-        name: "engineerGithub",
-        message: "Engineer" + chalk.italic(" GitHub username") + ":",
-        validate: validateGithub,
+        name: "imgSrc",
+        message: "What is the img Src of the Engineer?",
       },
       {
-        type: "list",
-        name: "menu",
-        message: chalk.yellow(
-          "--------- Menu --------- \nChoose one of the following options:"
-        ),
-        choices: [
-          {
-            name: "Add another" + chalk.bold(" ENGINEER") + " to my team",
-          },
-          {
-            name: "Add an" + chalk.bold(" INTERN") + " to my team",
-          },
-          {
-            name: "My team is complete",
-          },
-        ],
+        type: "input",
+        name: "gitHub",
+        message: `What is the engineer's github profile name?`,
       },
     ])
-    .then((answers) => {
-      menuPick = answers.menu;
+    .then((val) => {
       const engineer = new Engineer(
-        answers.engineerName,
-        parseInt(answers.engineerId),
-        answers.engineerEmail,
-        answers.engineerGithub
+        val.name,
+        val.id,
+        val.email,
+        val.imgSrc,
+        val.gitHub
       );
-      team[1].push(engineer);
-      nextPrompt();
+      console.table(engineer);
+      team.push(engineer);
+      addTeamMember();
     });
-};
+}
 
-// Intern prompts
-const internInfo = () => {
+/*Get intern data inputs*/
+function addIntern() {
   inquirer
     .prompt([
       {
         type: "input",
-        name: "internName",
-        message: "Intern" + chalk.italic(" name") + " (1-25 characters):",
-        validate: validateName,
+        name: "name",
+        message: `What is the Intern's name`,
       },
       {
         type: "input",
-        name: "internId",
-        message: "Intern" + chalk.italic(" employee ID") + ":",
-        validate: validateNumber,
+        name: "id",
+        message: `What is the Intern's employee ID?`,
       },
       {
         type: "input",
-        name: "internEmail",
-        message: "Intern" + chalk.italic(" email") + ":",
-        validate: validateEmail,
+        name: "email",
+        message: `What is the Intern's email address?`,
       },
       {
         type: "input",
-        name: "internSchool",
-        message: "Intern" + chalk.italic(" school") + ":",
+        name: "imgSrc",
+        message: "What is the img Src of the Intern?",
       },
       {
-        type: "list",
-        name: "menu",
-        message: chalk.yellow(
-          "--------- Menu --------- \nChoose one of the following options:"
-        ),
-        choices: [
-          {
-            name: "Add an" + chalk.bold(" ENGINEER") + " to my team",
-          },
-          {
-            name: "Add another" + chalk.bold(" INTERN") + " to my team",
-          },
-          {
-            name: "My team is complete",
-          },
-        ],
+        type: "input",
+        name: "school",
+        message: `What school did the intern go to?`,
       },
     ])
-    .then((answers) => {
-      menuPick = answers.menu;
+    .then((val) => {
       const intern = new Intern(
-        answers.internName,
-        parseInt(answers.internId),
-        answers.internEmail,
-        answers.internSchool
+        val.name,
+        val.id,
+        val.email,
+        val.imgSrc,
+        val.school
       );
-      team[2].push(intern);
-      nextPrompt();
+      console.table(intern);
+      team.push(intern);
+      addTeamMember();
     });
-};
+}
 
-managerInfo();
+/*Create the html file*/
+
+function createTeamFile() {
+  if (!fs.existsSync(DIST_DIR)) {
+    fs.mkdirSync(DIST_DIR);
+  } else {
+    fs.writeFileSync(outputPath, templateHTML(team), "utf-8");
+    console.log("HTML file created in the dist folder");
+  }
+}
+
+function startApp() {
+  addManager();
+}
+
+startApp();
