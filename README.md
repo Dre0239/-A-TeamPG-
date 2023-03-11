@@ -6,7 +6,7 @@ Object-Oriented Programming: Team Profile Generator
 
 ## Description
 
-In this assignment, I aimed to create a high-quality readme app. This app includes how to use, install, report issues and descriptions, and contact the GitHub user. Others can quickly and easily create a read-me file using command-line applications to generate one. In return, it allows the developer to devote more time to the main project. The README will be created dynamically from the user's inputs. There will be a short video showing the steps to create the README.
+In this assignment, I aimed to create a high-quality challenge is to build a Node.js command-line application that takes in information about employees on a software engineering team and generates an HTML webpage that displays summaries for each person.. This app will display Employee, Manager, Engineer, and Intern.
 ​
 
 ## Tasks
